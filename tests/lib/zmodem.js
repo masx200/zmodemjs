@@ -1,1 +1,1 @@
-module.exports = require('../../src/zmodem.js');
+module.exports = require("../../src/zmodem.js");

@@ -5,26 +5,21 @@ var Zmodem = module.exports;
 Object.assign(
     Zmodem,
     require("./zmlib"),
-    require("./zsession")
+    require("./zsession"),
 );
 
-const
-    MIN_ZM_HEX_START_LENGTH = 20,
+const MIN_ZM_HEX_START_LENGTH = 20,
     MAX_ZM_HEX_START_LENGTH = 21,
-
     // **, ZDLE, 'B0'
     //ZRQINIT’s next byte will be '0'; ZRINIT’s will be '1'.
-    COMMON_ZM_HEX_START = [ 42, 42, 24, 66, 48 ],
-
+    COMMON_ZM_HEX_START = [42, 42, 24, 66, 48],
     SENTRY_CONSTRUCTOR_REQUIRED_ARGS = [
         "to_terminal",
         "on_detect",
         "on_retract",
         "sender",
     ],
-
-    ASTERISK = 42
-;
+    ASTERISK = 42;
 
 /**
  * An instance of this object is passed to the Sentry’s on_detect
@@ -37,12 +32,10 @@ const
  * after which the Detection object is no longer usable.
  */
 class Detection {
-
     /**
      * Not called directly.
      */
     constructor(session_type, accepter, denier, checker) {
-
         //confirm() - user confirms that ZMODEM is desired
         this._confirmer = accepter;
 
@@ -98,7 +91,9 @@ class Detection {
      * - `receive`
      * - `send`
      */
-    get_session_role() { return this._session_type }
+    get_session_role() {
+        return this._session_type;
+    }
 }
 
 /**
@@ -154,7 +149,6 @@ class Detection {
  *      all traffic to to_terminal().
  */
 Zmodem.Sentry = class ZmodemSentry {
-
     /**
      * Invoked directly. Creates a new Sentry that inspects all
      * traffic before it goes to the terminal.
@@ -179,12 +173,12 @@ Zmodem.Sentry = class ZmodemSentry {
         if (!options) throw "Need options!";
 
         var sentry = this;
-        SENTRY_CONSTRUCTOR_REQUIRED_ARGS.forEach( function(arg) {
+        SENTRY_CONSTRUCTOR_REQUIRED_ARGS.forEach(function (arg) {
             if (!options[arg]) {
                 throw "Need “" + arg + "”!";
             }
             sentry["_" + arg] = options[arg];
-        } );
+        });
 
         this._cache = [];
     }
@@ -219,7 +213,7 @@ Zmodem.Sentry = class ZmodemSentry {
      */
     consume(input) {
         if (!(input instanceof Array)) {
-            input = Array.prototype.slice.call( new Uint8Array(input) );
+            input = Array.prototype.slice.call(new Uint8Array(input));
         }
 
         if (this._zsession) {
@@ -230,12 +224,10 @@ Zmodem.Sentry = class ZmodemSentry {
             if (session_before_consume.has_ended()) {
                 if (session_before_consume.type === "receive") {
                     input = session_before_consume.get_trailing_bytes();
-                }
-                else {
+                } else {
                     input = [];
                 }
-            }
-            else return;
+            } else return;
         }
 
         var new_session = this._parse(input);
@@ -272,7 +264,7 @@ Zmodem.Sentry = class ZmodemSentry {
 
                 new_session.on(
                     "session_end",
-                    sentry._after_session_end.bind(sentry)
+                    sentry._after_session_end.bind(sentry),
                 );
 
                 new_session.set_sender(sentry._sender);
@@ -280,20 +272,21 @@ Zmodem.Sentry = class ZmodemSentry {
                 delete sentry._parsed_session;
 
                 return sentry._zsession = new_session;
-            };
+            }
 
             function denier() {
                 if (!this.is_valid()) return;
-            };
+            }
 
-            this._on_detect( new Detection(
-                new_session.type,
-                accepter,
-                this._send_abort.bind(this),
-                checker
-            ) );
-        }
-        else {
+            this._on_detect(
+                new Detection(
+                    new_session.type,
+                    accepter,
+                    this._send_abort.bind(this),
+                    checker,
+                ),
+            );
+        } else {
             /*
             if (this._parsed_session) {
                 this._session_stale_because = 'Non-ZMODEM output received after ZMODEM initialization.';
@@ -305,7 +298,6 @@ Zmodem.Sentry = class ZmodemSentry {
             this._parsed_session = null;
 
             if (expired_session) {
-
                 //If we got a single “C” after parsing a session,
                 //that means our peer is trying to downgrade to YMODEM.
                 //That won’t work, so we just send the ABORT_SEQUENCE
@@ -330,7 +322,7 @@ Zmodem.Sentry = class ZmodemSentry {
     }
 
     _send_abort() {
-        this._sender( Zmodem.ZMLIB.ABORT_SEQUENCE );
+        this._sender(Zmodem.ZMLIB.ABORT_SEQUENCE);
     }
 
     /**
@@ -348,7 +340,7 @@ Zmodem.Sentry = class ZmodemSentry {
      * ZRINIT/ZRQINIT bytes to the terminal. They’re meant to go to the
      * terminal anyway, so that should be fine.
      *
-     * @private
+     * @ public
      *
      * @param {Array|Uint8Array} array_like - The input bytes.
      *      Each member should be a number between 0 and 255 (inclusive).
@@ -360,17 +352,20 @@ Zmodem.Sentry = class ZmodemSentry {
     _parse(array_like) {
         var cache = this._cache;
 
-        cache.push.apply( cache, array_like );
+        cache.push.apply(cache, array_like);
 
         while (true) {
-            let common_hex_at = Zmodem.ZMLIB.find_subarray( cache, COMMON_ZM_HEX_START );
+            let common_hex_at = Zmodem.ZMLIB.find_subarray(
+                cache,
+                COMMON_ZM_HEX_START,
+            );
             if (-1 === common_hex_at) break;
 
             let before_common_hex = cache.splice(0, common_hex_at);
             let zsession;
             try {
                 zsession = Zmodem.Session.parse(cache);
-            } catch(err) {     //ignore errors
+            } catch (err) { //ignore errors
                 //console.log(err);
             }
 
@@ -387,8 +382,9 @@ Zmodem.Sentry = class ZmodemSentry {
             return cache.length ? null : zsession;
         }
 
-        cache.splice( MAX_ZM_HEX_START_LENGTH );
+        cache.splice(MAX_ZM_HEX_START_LENGTH);
 
         return null;
     }
-}
+};
+Zmodem.Detection = Detection;

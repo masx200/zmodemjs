@@ -1,9 +1,9 @@
 language: node_js
 os:
-  - linux
-  - osx
+    - linux
+    - osx
 node_js:
-  - "node"
+    - "node"
 before_install:
-  - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install lrzsz; fi
-  - if [ $TRAVIS_OS_NAME = osx ]; then brew update; brew install lrzsz; fi
+    - if [ $TRAVIS_OS_NAME = linux ]; then sudo apt-get install lrzsz; fi
+    - if [ $TRAVIS_OS_NAME = osx ]; then brew update; brew install lrzsz; fi

@@ -2,3 +2,4 @@
 /dist
 /documentation
 /node_modules
+yarn.lock

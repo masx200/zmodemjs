@@ -7,21 +7,19 @@ Object.assign(
     require("./zcrc"),
     require("./zdle"),
     require("./zmlib"),
-    require("./zerror")
+    require("./zerror"),
 );
 
-const
-    ZCRCE = 0x68,    // 'h', 104, frame ends, header packet follows
-    ZCRCG = 0x69,    // 'i', 105, frame continues nonstop
-    ZCRCQ = 0x6a,    // 'j', 106, frame continues, ZACK expected
-    ZCRCW = 0x6b     // 'k', 107, frame ends, ZACK expected
+const ZCRCE = 0x68, // 'h', 104, frame ends, header packet follows
+    ZCRCG = 0x69, // 'i', 105, frame continues nonstop
+    ZCRCQ = 0x6a, // 'j', 106, frame continues, ZACK expected
+    ZCRCW = 0x6b // 'k', 107, frame ends, ZACK expected
 ;
 
 var SUBPACKET_BUILDER;
 
 /** Class that represents a ZMODEM data subpacket. */
 Zmodem.Subpacket = class ZmodemSubpacket {
-
     /**
      * Build a Subpacket subclass given a payload and frame end string.
      *
@@ -37,11 +35,12 @@ Zmodem.Subpacket = class ZmodemSubpacket {
      * @returns {Subpacket} An instance of the appropriate Subpacket subclass.
      */
     static build(octets, frameend) {
-
         //TODO: make this better
         var Ctr = SUBPACKET_BUILDER[frameend];
         if (!Ctr) {
-            throw("No subpacket type “" + frameend + "” is defined! Try one of: " + Object.keys(SUBPACKET_BUILDER).join(", "));
+            throw ("No subpacket type “" + frameend +
+                "” is defined! Try one of: " +
+                Object.keys(SUBPACKET_BUILDER).join(", "));
         }
 
         return new Ctr(octets);
@@ -57,7 +56,7 @@ Zmodem.Subpacket = class ZmodemSubpacket {
      *      as binary data.
      */
     encode16(zencoder) {
-        return this._encode( zencoder, Zmodem.CRC.crc16 );
+        return this._encode(zencoder, Zmodem.CRC.crc16);
     }
 
     /**
@@ -70,7 +69,7 @@ Zmodem.Subpacket = class ZmodemSubpacket {
      *      as binary data.
      */
     encode32(zencoder) {
-        return this._encode( zencoder, Zmodem.CRC.crc32 );
+        return this._encode(zencoder, Zmodem.CRC.crc32);
     }
 
     /**
@@ -85,7 +84,9 @@ Zmodem.Subpacket = class ZmodemSubpacket {
      * array of octet values. **DO NOT ALTER THIS ARRAY** unless you
      * no longer need the Subpacket.
      */
-    get_payload() { return this._payload }
+    get_payload() {
+        return this._payload;
+    }
 
     /**
      * Parse out a Subpacket object from a given array of octet values,
@@ -132,16 +133,15 @@ Zmodem.Subpacket = class ZmodemSubpacket {
     }
 
     _encode(zencoder, crc_func) {
-        return zencoder.encode( this._payload.slice(0) ).concat(
-            [ Zmodem.ZMLIB.ZDLE, this._frameend_num ],
-            zencoder.encode( crc_func( this._payload.concat(this._frameend_num) ) )
+        return zencoder.encode(this._payload.slice(0)).concat(
+            [Zmodem.ZMLIB.ZDLE, this._frameend_num],
+            zencoder.encode(crc_func(this._payload.concat(this._frameend_num))),
         );
     }
 
     //Because of ZDLE encoding, we’ll never see any of the frame-end octets
     //in a stream except as the ends of data payloads.
     static _parse(bytes_arr, crc_len) {
-
         var end_at;
         var creator;
 
@@ -155,11 +155,11 @@ Zmodem.Subpacket = class ZmodemSubpacket {
 
         var zdle_at = 0;
         while (zdle_at < bytes_arr.length) {
-            zdle_at = bytes_arr.indexOf( Zmodem.ZMLIB.ZDLE, zdle_at );
+            zdle_at = bytes_arr.indexOf(Zmodem.ZMLIB.ZDLE, zdle_at);
             if (zdle_at === -1) return;
 
-            var after_zdle = bytes_arr[ zdle_at + 1 ];
-            creator = _frame_ends_lookup[ after_zdle ];
+            var after_zdle = bytes_arr[zdle_at + 1];
+            creator = _frame_ends_lookup[after_zdle];
             if (creator) {
                 end_at = zdle_at + 1;
                 break;
@@ -174,12 +174,13 @@ Zmodem.Subpacket = class ZmodemSubpacket {
 
         //sanity check
         if (bytes_arr[end_at - 1] !== Zmodem.ZMLIB.ZDLE) {
-            throw( "Byte before frame end should be ZDLE, not " + bytes_arr[end_at - 1] );
+            throw ("Byte before frame end should be ZDLE, not " +
+                bytes_arr[end_at - 1]);
         }
 
-        var zdle_encoded_payload = bytes_arr.splice( 0, end_at - 1 );
+        var zdle_encoded_payload = bytes_arr.splice(0, end_at - 1);
 
-        var got_crc = Zmodem.ZDLE.splice( bytes_arr, 2, crc_len );
+        var got_crc = Zmodem.ZDLE.splice(bytes_arr, 2, crc_len);
         if (!got_crc) {
             //got payload but no CRC yet .. should be rare!
 
@@ -193,43 +194,55 @@ Zmodem.Subpacket = class ZmodemSubpacket {
 
         //We really shouldn’t need to do this, but just for good measure.
         //I suppose it’s conceivable this may run over UDP or something?
-        Zmodem.CRC[ (crc_len === 2) ? "verify16" : "verify32" ](
-            payload.concat( [frameend_num] ),
-            got_crc
+        Zmodem.CRC[(crc_len === 2) ? "verify16" : "verify32"](
+            payload.concat([frameend_num]),
+            got_crc,
         );
 
         return new creator(payload, got_crc);
     }
-}
+};
 
 class ZEndSubpacketBase extends Zmodem.Subpacket {
-    frame_end() { return true }
+    frame_end() {
+        return true;
+    }
 }
 class ZNoEndSubpacketBase extends Zmodem.Subpacket {
-    frame_end() { return false }
+    frame_end() {
+        return false;
+    }
 }
 
 //Used for end-of-file.
 class ZEndNoAckSubpacket extends ZEndSubpacketBase {
-    ack_expected() { return false }
+    ack_expected() {
+        return false;
+    }
 }
 ZEndNoAckSubpacket.prototype._frameend_num = ZCRCE;
 
 //Used for ZFILE and ZSINIT payloads.
 class ZEndAckSubpacket extends ZEndSubpacketBase {
-    ack_expected() { return true }
+    ack_expected() {
+        return true;
+    }
 }
 ZEndAckSubpacket.prototype._frameend_num = ZCRCW;
 
 //Used for ZDATA, prior to end-of-file.
 class ZNoEndNoAckSubpacket extends ZNoEndSubpacketBase {
-    ack_expected() { return false }
+    ack_expected() {
+        return false;
+    }
 }
 ZNoEndNoAckSubpacket.prototype._frameend_num = ZCRCG;
 
 //only used if receiver can full-duplex
 class ZNoEndAckSubpacket extends ZNoEndSubpacketBase {
-    ack_expected() { return true }
+    ack_expected() {
+        return true;
+    }
 }
 ZNoEndAckSubpacket.prototype._frameend_num = ZCRCQ;
 

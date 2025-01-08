@@ -2,13 +2,12 @@
 
 var Zmodem = module.exports;
 
-const
-    ZDLE = 0x18,
+const ZDLE = 0x18,
     XON = 0x11,
     XOFF = 0x13,
     XON_HIGH = 0x80 | XON,
     XOFF_HIGH = 0x80 | XOFF,
-    CAN = 0x18     //NB: same character as ZDLE
+    CAN = 0x18 //NB: same character as ZDLE
 ;
 
 /**
@@ -17,7 +16,6 @@ const
  * @exports ZMLIB
  */
 Zmodem.ZMLIB = {
-
     /**
      * @property {number} The ZDLE constant, which ZMODEM uses for escaping
      */
@@ -36,7 +34,7 @@ Zmodem.ZMLIB = {
     /**
      * @property {number[]} ABORT_SEQUENCE - ZMODEM’s abort sequence
      */
-    ABORT_SEQUENCE: [ CAN, CAN, CAN, CAN, CAN ],
+    ABORT_SEQUENCE: [CAN, CAN, CAN, CAN, CAN],
 
     /**
      * Remove octet values from the given array that ZMODEM always ignores.
@@ -50,7 +48,7 @@ Zmodem.ZMLIB = {
      *      passed in.
      */
     strip_ignored_bytes: function strip_ignored_bytes(octets) {
-        for (var o=octets.length-1; o>=0; o--) {
+        for (var o = octets.length - 1; o >= 0; o--) {
             switch (octets[o]) {
                 case XON:
                 case XON_HIGH:
@@ -78,16 +76,16 @@ Zmodem.ZMLIB = {
      *      in “haystack”.
      */
     find_subarray: function find_subarray(haystack, needle) {
-        var h=0, n;
+        var h = 0, n;
 
         var start = Date.now();
 
         HAYSTACK:
         while (h !== -1) {
-            h = haystack.indexOf( needle[0], h );
+            h = haystack.indexOf(needle[0], h);
             if (h === -1) break HAYSTACK;
 
-            for (n=1; n<needle.length; n++) {
+            for (n = 1; n < needle.length; n++) {
                 if (haystack[h + n] !== needle[n]) {
                     h++;
                     continue HAYSTACK;

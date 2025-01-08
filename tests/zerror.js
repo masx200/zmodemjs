@@ -2,62 +2,61 @@
 
 "use strict";
 
-global.Zmodem = require('./lib/zmodem');
+global.Zmodem = require("./lib/zmodem");
 
-const tape = require('blue-tape'),
+const tape = require("blue-tape"),
     TYPE_CHECKS = {
-        aborted: [ [] ],
+        aborted: [[]],
         peer_aborted: [],
         already_aborted: [],
         crc: [
-            [ [ 1, 2 ], [ 3, 4 ] ],
+            [[1, 2], [3, 4]],
             (t, err) => {
                 t.ok(
                     /1,2/.test(err.message),
-                    '"got" values are in the message'
+                    '"got" values are in the message',
                 );
                 t.ok(
                     /3,4/.test(err.message),
-                    '"expected" values are in the message'
+                    '"expected" values are in the message',
                 );
                 t.ok(
                     /CRC/i.test(err.message),
-                    '"CRC" is in the message'
+                    '"CRC" is in the message',
                 );
             },
         ],
         validation: [
-            [ "some string" ],
+            ["some string"],
             (t, err) => {
                 t.is(
                     err.message,
                     "some string",
-                    'message is given value'
+                    "message is given value",
                 );
             },
         ],
-    }
-;
+    };
 
 tape("typed", (t) => {
     let Ctr = Zmodem.Error;
 
     for (let type in TYPE_CHECKS) {
-        let args = [type].concat( TYPE_CHECKS[type][0] );
+        let args = [type].concat(TYPE_CHECKS[type][0]);
 
         //https://stackoverflow.com/questions/33193310/constr-applythis-args-in-es6-classes
-        var err = new (Ctr.bind.apply(Ctr, [null].concat(args)));
+        var err = new (Ctr.bind.apply(Ctr, [null].concat(args)))();
 
         t.ok(
-            (err instanceof Zmodem.Error),
-            `${type} type isa ZmodemError`
+            err instanceof Zmodem.Error,
+            `${type} type isa ZmodemError`,
         );
         t.ok(
             !!err.message.length,
-            `${type}: message has length`
+            `${type}: message has length`,
         );
 
-        if ( TYPE_CHECKS[type][1] ) {
+        if (TYPE_CHECKS[type][1]) {
             TYPE_CHECKS[type][1](t, err);
         }
     }
@@ -69,13 +68,13 @@ tape("generic", (t) => {
     let err = new Zmodem.Error("Van Gogh was a guy.");
 
     t.ok(
-        (err instanceof Zmodem.Error),
-        `generic isa ZmodemError`
+        err instanceof Zmodem.Error,
+        `generic isa ZmodemError`,
     );
     t.is(
         err.message,
         "Van Gogh was a guy.",
-        "passthrough of string"
+        "passthrough of string",
     );
 
     t.end();

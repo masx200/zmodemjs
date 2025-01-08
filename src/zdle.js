@@ -4,7 +4,7 @@ var Zmodem = module.exports;
 
 Object.assign(
     Zmodem,
-    require("./zmlib")
+    require("./zmlib"),
 );
 
 //encode() variables - declare them here so we don’t
@@ -87,36 +87,36 @@ Zmodem.ZDLE = class ZmodemZDLE {
 
         var last_code = this._lastcode;
 
-        var arrbuf = new ArrayBuffer( 2 * octets.length );
+        var arrbuf = new ArrayBuffer(2 * octets.length);
         var arrbuf_uint8 = new Uint8Array(arrbuf);
 
         var escctl_yn = this._config.escape_ctrl_chars;
 
         var arrbuf_i = 0;
 
-        for (encode_cur=0; encode_cur<octets.length; encode_cur++) {
-
+        for (encode_cur = 0; encode_cur < octets.length; encode_cur++) {
             encode_todo = zdle_table[octets[encode_cur]];
             if (!encode_todo) {
                 console.trace();
                 console.error("bad encode() call:", JSON.stringify(octets));
                 this._lastcode = last_code;
-                throw( "Invalid octet: " + octets[encode_cur] );
+                throw ("Invalid octet: " + octets[encode_cur]);
             }
 
             last_code = octets[encode_cur];
 
             if (encode_todo === 1) {
                 //Do nothing; we append last_code below.
-            }
-
-            //0x40 = '@'; i.e., only escape if the last
+            } //0x40 = '@'; i.e., only escape if the last
             //octet was '@'.
-            else if (escctl_yn || (encode_todo === 2) || ((last_code & 0x7f) === 0x40)) {
+            else if (
+                escctl_yn || (encode_todo === 2) ||
+                ((last_code & 0x7f) === 0x40)
+            ) {
                 arrbuf_uint8[arrbuf_i] = ZDLE;
                 arrbuf_i++;
 
-                last_code ^= 0x40;   //0100
+                last_code ^= 0x40; //0100
             }
 
             arrbuf_uint8[arrbuf_i] = last_code;
@@ -127,7 +127,7 @@ Zmodem.ZDLE = class ZmodemZDLE {
         this._lastcode = last_code;
 
         octets.splice(0);
-        octets.push.apply(octets, new Uint8Array( arrbuf, 0, arrbuf_i ));
+        octets.push.apply(octets, new Uint8Array(arrbuf, 0, arrbuf_i));
 
         return octets;
     }
@@ -144,9 +144,9 @@ Zmodem.ZDLE = class ZmodemZDLE {
      *  This is the same object that is passed in.
      */
     static decode(octets) {
-        for (var o=octets.length-1; o>=0; o--) {
+        for (var o = octets.length - 1; o >= 0; o--) {
             if (octets[o] === ZDLE) {
-                octets.splice( o, 2, octets[o+1] - 64 );
+                octets.splice(o, 2, octets[o + 1] - 64);
             }
         }
 
@@ -176,20 +176,19 @@ Zmodem.ZDLE = class ZmodemZDLE {
 
         if (!offset) offset = 0;
 
-        for (var i = offset; i<octets.length && so_far<count; i++) {
+        for (var i = offset; i < octets.length && so_far < count; i++) {
             so_far++;
 
             if (octets[i] === ZDLE) i++;
         }
 
         if (so_far === count) {
-
             //Don’t accept trailing ZDLE. This check works
             //because of the i++ logic above.
             if (octets.length === (i - 1)) return;
 
             octets.splice(0, offset);
-            return ZmodemZDLE.decode( octets.splice(0, i - offset) );
+            return ZmodemZDLE.decode(octets.splice(0, i - offset));
         }
 
         return;
@@ -197,8 +196,7 @@ Zmodem.ZDLE = class ZmodemZDLE {
 
     _setup_zdle_table() {
         var zsendline_tab = new Array(256);
-        for (var i=0; i<zsendline_tab.length; i++) {
-
+        for (var i = 0; i < zsendline_tab.length; i++) {
             //1 = never escape
             //2 = always escape
             //3 = escape only if the previous byte was '@'
@@ -206,12 +204,11 @@ Zmodem.ZDLE = class ZmodemZDLE {
             //Never escape characters from 0x20 (32) to 0x7f (127).
             //This is the range of printable characters, plus DEL.
             //I guess ZMODEM doesn’t consider DEL to be a control character?
-            if ( i & 0x60 ) {
+            if (i & 0x60) {
                 zsendline_tab[i] = 1;
-            }
-            else {
-                switch(i) {
-                    case ZDLE:  //NB: no (ZDLE | 0x80)
+            } else {
+                switch (i) {
+                    case ZDLE: //NB: no (ZDLE | 0x80)
                     case Zmodem.ZMLIB.XOFF:
                     case Zmodem.ZMLIB.XON:
                     case (Zmodem.ZMLIB.XOFF | 0x80):
@@ -219,22 +216,28 @@ Zmodem.ZDLE = class ZmodemZDLE {
                         zsendline_tab[i] = 2;
                         break;
 
-                    case 0x10:  // 020
-                    case 0x90:  // 0220
+                    case 0x10: // 020
+                    case 0x90: // 0220
                         zsendline_tab[i] = this._config.turbo_escape ? 1 : 2;
                         break;
 
-                    case 0x0d:  // 015
-                    case 0x8d:  // 0215
-                        zsendline_tab[i] = this._config.escape_ctrl_chars ? 2 : !this._config.turbo_escape ? 3 : 1;
+                    case 0x0d: // 015
+                    case 0x8d: // 0215
+                        zsendline_tab[i] = this._config.escape_ctrl_chars
+                            ? 2
+                            : !this._config.turbo_escape
+                            ? 3
+                            : 1;
                         break;
 
                     default:
-                        zsendline_tab[i] = this._config.escape_ctrl_chars ? 2 : 1;
+                        zsendline_tab[i] = this._config.escape_ctrl_chars
+                            ? 2
+                            : 1;
                 }
             }
         }
 
         this._zdle_table = zsendline_tab;
     }
-}
+};

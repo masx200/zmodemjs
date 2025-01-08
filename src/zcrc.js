@@ -1,13 +1,13 @@
 "use strict";
 
-const CRC32_MOD = require('crc-32');
+const CRC32_MOD = require("crc-32");
 
 var Zmodem = module.exports;
 
 Object.assign(
     Zmodem,
     require("./zerror"),
-    require("./encode")
+    require("./encode"),
 );
 
 //----------------------------------------------------------------------
@@ -15,12 +15,10 @@ Object.assign(
 
 var _crctab;
 
-const
-    crc_width = 16,
+const crc_width = 16,
     crc_polynomial = 0x1021,
     crc_castmask = 0xffff,
-    crc_msbmask = 1 << (crc_width - 1)
-;
+    crc_msbmask = 1 << (crc_width - 1);
 
 function _compute_crctab() {
     _crctab = new Array(256);
@@ -31,17 +29,15 @@ function _compute_crctab() {
         var currByte = (divident << divident_shift) & crc_castmask;
 
         for (var bit = 0; bit < 8; bit++) {
-
             if ((currByte & crc_msbmask) !== 0) {
                 currByte <<= 1;
                 currByte ^= crc_polynomial;
-            }
-            else {
+            } else {
                 currByte <<= 1;
             }
         }
 
-        _crctab[divident] = (currByte & crc_castmask);
+        _crctab[divident] = currByte & crc_castmask;
     }
 }
 
@@ -51,24 +47,23 @@ function _compute_crctab() {
 function _updcrc(cp, crc) {
     if (!_crctab) _compute_crctab();
 
-    return(
-        _crctab[((crc >> 8) & 255)]
-        ^ ((255 & crc) << 8)
-        ^ cp
+    return (
+        _crctab[(crc >> 8) & 255] ^
+        ((255 & crc) << 8) ^
+        cp
     );
 }
 
 function __verify(expect, got) {
     var err;
 
-    if ( expect.join() !== got.join() ) {
+    if (expect.join() !== got.join()) {
         throw new Zmodem.Error("crc", got, expect);
     }
 }
 
 //TODO: use external implementation(s)
 Zmodem.CRC = {
-
     //https://www.lammertbies.nl/comm/info/crc-calculation.html
     //CRC-CCITT (XModem)
 
@@ -83,11 +78,11 @@ Zmodem.CRC = {
      */
     crc16: function crc16(octet_nums) {
         var crc = octet_nums[0];
-        for (var b=1; b<octet_nums.length; b++) {
-            crc = _updcrc( octet_nums[b], crc );
+        for (var b = 1; b < octet_nums.length; b++) {
+            crc = _updcrc(octet_nums[b], crc);
         }
 
-        crc = _updcrc( 0, _updcrc(0, crc) );
+        crc = _updcrc(0, _updcrc(0, crc));
 
         //a big-endian 2-byte sequence
         return Zmodem.ENCODELIB.pack_u16_be(crc);
@@ -103,7 +98,7 @@ Zmodem.CRC = {
      */
     crc32: function crc32(octet_nums) {
         return Zmodem.ENCODELIB.pack_u32_le(
-            CRC32_MOD.buf(octet_nums) >>> 0     //bit-shift to get unsigned
+            CRC32_MOD.buf(octet_nums) >>> 0, //bit-shift to get unsigned
         );
     },
 
@@ -118,7 +113,7 @@ Zmodem.CRC = {
      *      an array of octet values.
      */
     verify16: function verify16(bytes_arr, got) {
-        return __verify( this.crc16(bytes_arr), got );
+        return __verify(this.crc16(bytes_arr), got);
     },
 
     /**
@@ -133,9 +128,8 @@ Zmodem.CRC = {
      */
     verify32: function verify32(bytes_arr, crc) {
         try {
-            __verify( this.crc32(bytes_arr), crc );
-        }
-        catch(err) {
+            __verify(this.crc32(bytes_arr), crc);
+        } catch (err) {
             err.input = bytes_arr.slice(0);
             throw err;
         }

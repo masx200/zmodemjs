@@ -2,5 +2,5 @@
 
 Object.assign(
     module.exports,
-    require("./src/zsentry")
+    require("./src/zsentry"),
 );

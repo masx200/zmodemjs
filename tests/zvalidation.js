@@ -2,107 +2,106 @@
 
 "use strict";
 
-const tape = require('blue-tape');
+const tape = require("blue-tape");
 
-global.Zmodem = require('./lib/zmodem');
+global.Zmodem = require("./lib/zmodem");
 
 const zcrc = Zmodem.CRC;
 
 var now = new Date();
-var now_epoch = Math.floor( now.getTime() / 1000 );
+var now_epoch = Math.floor(now.getTime() / 1000);
 
 var failures = [
     [
-        'empty name',
+        "empty name",
         { name: "" },
-        function(t, e) {
-            t.ok( /name/.test(e.message), 'has “name”' );
+        function (t, e) {
+            t.ok(/name/.test(e.message), "has “name”");
         },
     ],
     [
-        'non-string name',
+        "non-string name",
         { name: 123 },
-        function(t, e) {
-            t.ok( /name/.test(e.message), 'has “name”' );
-            t.ok( /string/.test(e.message), 'has “string”' );
+        function (t, e) {
+            t.ok(/name/.test(e.message), "has “name”");
+            t.ok(/string/.test(e.message), "has “string”");
         },
     ],
     [
-        'non-empty serial',
+        "non-empty serial",
         { name: "123", serial: 0 },
-        function(t, e) {
-            t.ok( /serial/.test(e.message), 'has “serial”' );
+        function (t, e) {
+            t.ok(/serial/.test(e.message), "has “serial”");
         },
     ],
     [
-        'files_remaining === 0',
+        "files_remaining === 0",
         { name: "123", files_remaining: 0 },
-        function(t, e) {
-            t.ok( /files_remaining/.test(e.message), 'has “files_remaining”' );
+        function (t, e) {
+            t.ok(/files_remaining/.test(e.message), "has “files_remaining”");
         },
     ],
     [
-        'pre-epoch mtime',
+        "pre-epoch mtime",
         { name: "123", mtime: new Date("1969-12-30T01:02:03Z") },
-        function(t, e) {
-            t.ok( /mtime/.test(e.message), 'has “mtime”' );
-            t.ok( /1969/.test(e.message), 'has “1969”' );
-            t.ok( /1970/.test(e.message), 'has “1970”' );
+        function (t, e) {
+            t.ok(/mtime/.test(e.message), "has “mtime”");
+            t.ok(/1969/.test(e.message), "has “1969”");
+            t.ok(/1970/.test(e.message), "has “1970”");
         },
     ],
 ];
 
-["size", "mode", "mtime", "files_remaining", "bytes_remaining"].forEach( (k) => {
+["size", "mode", "mtime", "files_remaining", "bytes_remaining"].forEach((k) => {
     var input = { name: "the name" };
     input[k] = "123123";
 
     var key_regexp = new RegExp(k);
     var value_regexp = new RegExp(input[k]);
 
-    failures.push( [
+    failures.push([
         `string “${k}”`,
         input,
-        function(t, e) {
-            t.ok( key_regexp.test(e.message), `has “${k}”` );
-            t.ok( value_regexp.test(e.message), 'has value' );
-            t.ok( /number/.test(e.message), 'has “number”' );
+        function (t, e) {
+            t.ok(key_regexp.test(e.message), `has “${k}”`);
+            t.ok(value_regexp.test(e.message), "has value");
+            t.ok(/number/.test(e.message), "has “number”");
         },
-    ] );
+    ]);
 
-    input = Object.assign( {}, input );
+    input = Object.assign({}, input);
     input[k] = -input[k];
 
     var negative_regexp = new RegExp(input[k]);
 
-    failures.push( [
+    failures.push([
         `negative “${k}”`,
         input,
-        function(t, e) {
-            t.ok( key_regexp.test(e.message), `has “${k}”` );
-            t.ok( negative_regexp.test(e.message), 'has value' );
+        function (t, e) {
+            t.ok(key_regexp.test(e.message), `has “${k}”`);
+            t.ok(negative_regexp.test(e.message), "has value");
         },
-    ] );
+    ]);
 
-    input = Object.assign( {}, input );
+    input = Object.assign({}, input);
     input[k] = -input[k] - 0.1;
 
-    var fraction_regexp = new RegExp( ("" + input[k]).replace(/\./, "\\.") );
+    var fraction_regexp = new RegExp(("" + input[k]).replace(/\./, "\\."));
 
-    failures.push( [
+    failures.push([
         `fraction “${k}”`,
         input,
-        function(t, e) {
-            t.ok( key_regexp.test(e.message), `has “${k}”` );
-            t.ok( fraction_regexp.test(e.message), 'has value' );
+        function (t, e) {
+            t.ok(key_regexp.test(e.message), `has “${k}”`);
+            t.ok(fraction_regexp.test(e.message), "has value");
         },
-    ] );
-} );
-
+    ]);
+});
 
 var transformations = [
     [
-        'name only',
-        { name: "My name", },
+        "name only",
+        { name: "My name" },
         {
             name: "My name",
             size: null,
@@ -114,8 +113,8 @@ var transformations = [
         },
     ],
     [
-        'name is all numerals',
-        { name: "0", },
+        "name is all numerals",
+        { name: "0" },
         {
             name: "0",
             size: null,
@@ -127,7 +126,7 @@ var transformations = [
         },
     ],
     [
-        'name only (undefined rather than null)',
+        "name only (undefined rather than null)",
         {
             name: "My name",
             size: undefined,
@@ -148,7 +147,7 @@ var transformations = [
         },
     ],
     [
-        'name and all numbers',
+        "name and all numbers",
         {
             name: "My name",
             size: 0,
@@ -169,7 +168,7 @@ var transformations = [
         },
     ],
     [
-        'name, zero size',
+        "name, zero size",
         { name: "My name", mtime: now },
         {
             name: "My name",
@@ -182,7 +181,7 @@ var transformations = [
         },
     ],
     [
-        'name, mtime as Date',
+        "name, mtime as Date",
         { name: "My name", size: 0 },
         {
             name: "My name",
@@ -196,16 +195,16 @@ var transformations = [
     ],
 ];
 
-tape('offer_parameters - failures', function(t) {
-
+tape("offer_parameters - failures", function (t) {
     for (const [label, input, todo] of failures) {
         let err;
         try {
             Zmodem.Validation.offer_parameters(input);
+        } catch (e) {
+            err = e;
         }
-        catch(e) { err = e }
 
-        t.ok( err instanceof Zmodem.Error, `throws ok: ${label}` );
+        t.ok(err instanceof Zmodem.Error, `throws ok: ${label}`);
 
         todo(t, err);
     }
@@ -213,8 +212,7 @@ tape('offer_parameters - failures', function(t) {
     t.end();
 });
 
-tape('offer_parameters - happy path', function(t) {
-
+tape("offer_parameters - happy path", function (t) {
     for (const [label, input, output] of transformations) {
         t.deepEquals(
             Zmodem.Validation.offer_parameters(input),

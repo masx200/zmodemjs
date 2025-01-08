@@ -2,11 +2,28 @@
 
 var Zmodem = module.exports;
 
-const HEX_DIGITS = [ 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102 ];
+const HEX_DIGITS = [
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+];
 
 const HEX_OCTET_VALUE = {};
-for (var hd=0; hd<HEX_DIGITS.length; hd++) {
-    HEX_OCTET_VALUE[ HEX_DIGITS[hd] ] = hd;
+for (var hd = 0; hd < HEX_DIGITS.length; hd++) {
+    HEX_OCTET_VALUE[HEX_DIGITS[hd]] = hd;
 }
 
 /**
@@ -15,7 +32,6 @@ for (var hd=0; hd<HEX_DIGITS.length; hd++) {
  * @exports ENCODELIB
  */
 Zmodem.ENCODELIB = {
-
     /**
      * Return an array with the given number as 2 big-endian bytes.
      *
@@ -24,9 +40,9 @@ Zmodem.ENCODELIB = {
      * @returns {number[]} The octet values.
      */
     pack_u16_be: function pack_u16_be(number) {
-        if (number > 0xffff) throw( "Number cannot exceed 16 bits: " + number )
+        if (number > 0xffff) throw ("Number cannot exceed 16 bits: " + number);
 
-        return [ number >> 8, number & 0xff ];
+        return [number >> 8, number & 0xff];
     },
 
     /**
@@ -39,7 +55,7 @@ Zmodem.ENCODELIB = {
     pack_u32_le: function pack_u32_le(number) {
         //Can’t bit-shift because that runs into JS’s bit-shift problem.
         //(See _updcrc32() for an example.)
-        var high_bytes = number / 65536;   //fraction is ok
+        var high_bytes = number / 65536; //fraction is ok
 
         //a little-endian 4-byte sequence
         return [
@@ -72,7 +88,8 @@ Zmodem.ENCODELIB = {
      */
     unpack_u32_le: function unpack_u32_le(octets) {
         //<sigh> … (254 << 24 is -33554432, according to JavaScript)
-        return octets[0] + (octets[1] << 8) + (octets[2] << 16) + (octets[3] * 16777216);
+        return octets[0] + (octets[1] << 8) + (octets[2] << 16) +
+            (octets[3] * 16777216);
     },
 
     /**
@@ -94,10 +111,10 @@ Zmodem.ENCODELIB = {
      */
     octets_to_hex: function octets_to_hex(octets) {
         var hex = [];
-        for (var o=0; o<octets.length; o++) {
+        for (var o = 0; o < octets.length; o++) {
             hex.push(
-                HEX_DIGITS[ octets[o] >> 4 ],
-                HEX_DIGITS[ octets[o] & 0x0f ]
+                HEX_DIGITS[octets[o] >> 4],
+                HEX_DIGITS[octets[o] & 0x0f],
             );
         }
 
@@ -115,8 +132,9 @@ Zmodem.ENCODELIB = {
     parse_hex_octets: function parse_hex_octets(hex_octets) {
         var octets = new Array(hex_octets.length / 2);
 
-        for (var i=0; i<octets.length; i++) {
-            octets[i] = (HEX_OCTET_VALUE[ hex_octets[2 * i] ] << 4) + HEX_OCTET_VALUE[ hex_octets[1 + 2 * i] ];
+        for (var i = 0; i < octets.length; i++) {
+            octets[i] = (HEX_OCTET_VALUE[hex_octets[2 * i]] << 4) +
+                HEX_OCTET_VALUE[hex_octets[1 + 2 * i]];
         }
 
         return octets;

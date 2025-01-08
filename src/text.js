@@ -2,7 +2,7 @@ class _my_TextEncoder {
     encode(text) {
         text = unescape(encodeURIComponent(text));
 
-        var bytes = new Array( text.length );
+        var bytes = new Array(text.length);
 
         for (var b = 0; b < text.length; b++) {
             bytes[b] = text.charCodeAt(b);
@@ -14,7 +14,9 @@ class _my_TextEncoder {
 
 class _my_TextDecoder {
     decode(bytes) {
-        return decodeURIComponent( escape( String.fromCharCode.apply(String, bytes) ) );
+        return decodeURIComponent(
+            escape(String.fromCharCode.apply(String, bytes)),
+        );
     }
 }
 
@@ -28,6 +30,10 @@ var Zmodem = module.exports;
  * @exports Text
  */
 Zmodem.Text = {
-    Encoder: (typeof TextEncoder !== "undefined") ? TextEncoder : _my_TextEncoder,
-    Decoder: (typeof TextDecoder !== "undefined") ? TextDecoder : _my_TextDecoder,
+    Encoder: (typeof TextEncoder !== "undefined")
+        ? TextEncoder
+        : _my_TextEncoder,
+    Decoder: (typeof TextDecoder !== "undefined")
+        ? TextDecoder
+        : _my_TextDecoder,
 };

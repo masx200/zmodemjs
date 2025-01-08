@@ -5,10 +5,13 @@ var Zmodem = module.exports;
 function _crc_message(got, expected) {
     this.got = got.slice(0);
     this.expected = expected.slice(0);
-    return "CRC check failed! (got: " + got.join() + "; expected: " + expected.join() + ")";
+    return "CRC check failed! (got: " + got.join() + "; expected: " +
+        expected.join() + ")";
 }
 
-function _pass(val) { return val }
+function _pass(val) {
+    return val;
+}
 
 const TYPE_MESSAGE = {
     aborted: "Session aborted",
@@ -39,8 +42,7 @@ Zmodem.Error = class ZmodemError extends Error {
         if (generated) {
             this.type = msg_or_type;
             this.message = generated;
-        }
-        else {
+        } else {
             this.message = msg_or_type;
         }
     }

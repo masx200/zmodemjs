@@ -7,7 +7,7 @@ window.Zmodem = Zmodem;
 
 Object.assign(
     Zmodem,
-    require("./zmodem")
+    require("./zmodem"),
 );
 
 function _check_aborted(session) {
@@ -21,7 +21,6 @@ function _check_aborted(session) {
  * @exports Browser
  */
 Zmodem.Browser = {
-
     /**
      * Send a batch of files in sequence. The session is left open
      * afterward, which allows for more files to be sent if desired.
@@ -62,7 +61,7 @@ Zmodem.Browser = {
         //the remaining files/bytes components.
         var batch = [];
         var total_size = 0;
-        for (var f=files.length - 1; f>=0; f--) {
+        for (var f = files.length - 1; f >= 0; f--) {
             var fobj = files[f];
             total_size += fobj.size;
             batch[f] = {
@@ -85,68 +84,76 @@ Zmodem.Browser = {
 
             file_idx++;
 
-            return session.send_offer(cur_b).then( function after_send_offer(xfer) {
-                if (options.on_offer_response) {
-                    options.on_offer_response(cur_b.obj, xfer);
-                }
+            return session.send_offer(cur_b).then(
+                function after_send_offer(xfer) {
+                    if (options.on_offer_response) {
+                        options.on_offer_response(cur_b.obj, xfer);
+                    }
 
-                if (xfer === undefined) {
-                    return promise_callback();   //skipped
-                }
+                    if (xfer === undefined) {
+                        return promise_callback(); //skipped
+                    }
 
-                return new Promise( function(res) {
-                    var reader = new FileReader();
+                    return new Promise(function (res) {
+                        var reader = new FileReader();
 
-                    //This really shouldn’t happen … so let’s
-                    //blow up if it does.
-                    reader.onerror = function reader_onerror(e) {
-                        console.error("file read error", e);
-                        throw("File read error: " + e);
-                    };
+                        //This really shouldn’t happen … so let’s
+                        //blow up if it does.
+                        reader.onerror = function reader_onerror(e) {
+                            console.error("file read error", e);
+                            throw ("File read error: " + e);
+                        };
 
-                    var piece;
-                    reader.onprogress = function reader_onprogress(e) {
+                        var piece;
+                        reader.onprogress = function reader_onprogress(e) {
+                            //Some browsers (e.g., Chrome) give partial returns,
+                            //while others (e.g., Firefox) don’t.
+                            if (e.target.result) {
+                                piece = new Uint8Array(
+                                    e.target.result,
+                                    xfer.get_offset(),
+                                );
 
-                        //Some browsers (e.g., Chrome) give partial returns,
-                        //while others (e.g., Firefox) don’t.
-                        if (e.target.result) {
-                            piece = new Uint8Array(e.target.result, xfer.get_offset())
+                                _check_aborted(session);
+
+                                xfer.send(piece);
+
+                                if (options.on_progress) {
+                                    options.on_progress(cur_b.obj, xfer, piece);
+                                }
+                            }
+                        };
+
+                        reader.onload = function reader_onload(e) {
+                            piece = new Uint8Array(
+                                e.target.result,
+                                xfer,
+                                piece,
+                            );
 
                             _check_aborted(session);
 
-                            xfer.send(piece);
+                            xfer.end(piece).then(function () {
+                                if (options.on_progress && piece.length) {
+                                    options.on_progress(cur_b.obj, xfer, piece);
+                                }
 
-                            if (options.on_progress) {
-                                options.on_progress(cur_b.obj, xfer, piece);
-                            }
-                        }
-                    };
+                                if (options.on_file_complete) {
+                                    options.on_file_complete(cur_b.obj, xfer);
+                                }
 
-                    reader.onload = function reader_onload(e) {
-                        piece = new Uint8Array(e.target.result, xfer, piece)
+                                //Resolve the current file-send promise with
+                                //another promise. That promise resolves immediately
+                                //if we’re done, or with another file-send promise
+                                //if there’s more to send.
+                                res(promise_callback());
+                            });
+                        };
 
-                        _check_aborted(session);
-
-                        xfer.end(piece).then( function() {
-                            if (options.on_progress && piece.length) {
-                                options.on_progress(cur_b.obj, xfer, piece);
-                            }
-
-                            if (options.on_file_complete) {
-                                options.on_file_complete(cur_b.obj, xfer);
-                            }
-
-                            //Resolve the current file-send promise with
-                            //another promise. That promise resolves immediately
-                            //if we’re done, or with another file-send promise
-                            //if there’s more to send.
-                            res( promise_callback() );
-                        } );
-                    };
-
-                    reader.readAsArrayBuffer(cur_b.obj);
-                } );
-            } );
+                        reader.readAsArrayBuffer(cur_b.obj);
+                    });
+                },
+            );
         }
 
         return promise_callback();

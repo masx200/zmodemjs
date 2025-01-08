@@ -4,18 +4,24 @@ var Zmodem = module.exports;
 
 Object.assign(
     Zmodem,
-    require("./zerror")
+    require("./zerror"),
 );
 
 const LOOKS_LIKE_ZMODEM_HEADER = /\*\x18[AC]|\*\*\x18B/;
 
 function _validate_number(key, value) {
     if (value < 0) {
-        throw new Zmodem.Error("validation", "“" + key + "” (" + value + ") must be nonnegative.");
+        throw new Zmodem.Error(
+            "validation",
+            "“" + key + "” (" + value + ") must be nonnegative.",
+        );
     }
 
     if (value !== Math.floor(value)) {
-        throw new Zmodem.Error("validation", "“" + key + "” (" + value + ") must be an integer.");
+        throw new Zmodem.Error(
+            "validation",
+            "“" + key + "” (" + value + ") must be an integer.",
+        );
     }
 }
 
@@ -24,7 +30,6 @@ function _validate_number(key, value) {
  * @exports Validation
  */
 Zmodem.Validation = {
-
     /**
      * Validates and normalizes a set of parameters for an offer to send.
      * NOTE: This returns “mtime” as epoch seconds, not a Date. This is
@@ -43,7 +48,10 @@ Zmodem.Validation = {
         }
 
         if (typeof params.name !== "string") {
-            throw new Zmodem.Error("validation", "“name” (" + params.name + ") must be a string!");
+            throw new Zmodem.Error(
+                "validation",
+                "“name” (" + params.name + ") must be a string!",
+            );
         }
 
         //So that we can override values as is useful
@@ -51,7 +59,10 @@ Zmodem.Validation = {
         params = Object.assign({}, params);
 
         if (LOOKS_LIKE_ZMODEM_HEADER.test(params.name)) {
-            console.warn("The filename " + JSON.stringify(name) + " contains characters that look like a ZMODEM header. This could corrupt the ZMODEM session; consider renaming it so that the filename doesn’t contain control characters.");
+            console.warn(
+                "The filename " + JSON.stringify(name) +
+                    " contains characters that look like a ZMODEM header. This could corrupt the ZMODEM session; consider renaming it so that the filename doesn’t contain control characters.",
+            );
         }
 
         if (params.serial !== null && params.serial !== undefined) {
@@ -61,11 +72,11 @@ Zmodem.Validation = {
         params.serial = null;
 
         ["size", "mode", "files_remaining", "bytes_remaining"].forEach(
-            function(k) {
+            function (k) {
                 var ok;
                 switch (typeof params[k]) {
                     case "object":
-                        ok = (params[k] === null);
+                        ok = params[k] === null;
                         break;
                     case "undefined":
                         params[k] = null;
@@ -79,9 +90,13 @@ Zmodem.Validation = {
                 }
 
                 if (!ok) {
-                    throw new Zmodem.Error("validation", "“" + k + "” (" + params[k] + ") must be null, undefined, or a number.");
+                    throw new Zmodem.Error(
+                        "validation",
+                        "“" + k + "” (" + params[k] +
+                            ") must be null, undefined, or a number.",
+                    );
                 }
-            }
+            },
         );
 
         if (typeof params.mode === "number") {
@@ -89,7 +104,10 @@ Zmodem.Validation = {
         }
 
         if (params.files_remaining === 0) {
-            throw new Zmodem.Error("validation", "“files_remaining”, if given, must be positive.");
+            throw new Zmodem.Error(
+                "validation",
+                "“files_remaining”, if given, must be positive.",
+            );
         }
 
         var mtime_ok;
@@ -98,14 +116,16 @@ Zmodem.Validation = {
                 mtime_ok = true;
 
                 if (params.mtime instanceof Date) {
-
                     var date_obj = params.mtime;
-                    params.mtime = Math.floor( date_obj.getTime() / 1000 );
+                    params.mtime = Math.floor(date_obj.getTime() / 1000);
                     if (params.mtime < 0) {
-                        throw new Zmodem.Error("validation", "“mtime” (" + date_obj + ") must not be earlier than 1970.");
+                        throw new Zmodem.Error(
+                            "validation",
+                            "“mtime” (" + date_obj +
+                                ") must not be earlier than 1970.",
+                        );
                     }
-                }
-                else if (params.mtime !== null) {
+                } else if (params.mtime !== null) {
                     mtime_ok = false;
                 }
 
@@ -122,7 +142,11 @@ Zmodem.Validation = {
         }
 
         if (!mtime_ok) {
-            throw new Zmodem.Error("validation", "“mtime” (" + params.mtime + ") must be null, undefined, a Date, or a number.");
+            throw new Zmodem.Error(
+                "validation",
+                "“mtime” (" + params.mtime +
+                    ") must be null, undefined, a Date, or a number.",
+            );
         }
 
         return params;
